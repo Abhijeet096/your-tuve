@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { forwardRef } from "react";
 
 interface VideoPlayerProps {
   video: {
@@ -10,14 +10,14 @@ interface VideoPlayerProps {
   };
 }
 
-export default function VideoPlayer({ video }: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const videos = "/video/vdo.mp4";
-
+const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(function VideoPlayer(
+  { video },
+  ref
+) {
   return (
     <div className="aspect-video bg-black rounded-lg overflow-hidden">
       <video
-        ref={videoRef}
+        ref={ref}
         className="w-full h-full"
         controls
         poster={`/placeholder.svg?height=480&width=854`}
@@ -30,4 +30,6 @@ export default function VideoPlayer({ video }: VideoPlayerProps) {
       </video>
     </div>
   );
-}
+});
+
+export default VideoPlayer;

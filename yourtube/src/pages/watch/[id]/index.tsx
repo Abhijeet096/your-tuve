@@ -2,10 +2,13 @@ import Comments from "@/components/Comments";
 import RelatedVideos from "@/components/RelatedVideos";
 import VideoInfo from "@/components/VideoInfo";
 import Videopplayer from "@/components/Videopplayer";
+import WatchParty from "@/components/WatchParty";
+import { Button } from "@/components/ui/button";
+import { Users } from "lucide-react";
 import axiosInstance from "@/lib/axiosinstance";
 import { notFound } from "next/navigation";
 import { useRouter } from "next/router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const index = () => {
   const router = useRouter();
@@ -13,6 +16,12 @@ const index = () => {
   const [videos, setvideo] = useState<any>(null);
   const [video, setvide] = useState<any>(null);
   const [loading, setloading] = useState(true);
+  const [partyOpen, setPartyOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (router.query.party === "1") setPartyOpen(true);
+  }, [router.query.party]);
   useEffect(() => {
     const fetchvideo = async () => {
       if (!id || typeof id !== "string") return;
@@ -71,11 +80,20 @@ const index = () => {
       <div className="max-w-7xl mx-auto p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <Videopplayer video={videos} />
+            <Videopplayer video={videos} ref={videoRef} />
             <VideoInfo video={videos} />
+            {!partyOpen && (
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => setPartyOpen(true)}>
+                <Users className="w-4 h-4" />
+                Watch party
+              </Button>
+            )}
             <Comments videoId={id} />
           </div>
           <div className="space-y-4">
+            {partyOpen && typeof id === "string" && (
+              <WatchParty videoId={id} videoRef={videoRef} onClose={() => setPartyOpen(false)} />
+            )}
             <RelatedVideos videos={video} />
           </div>
         </div>
