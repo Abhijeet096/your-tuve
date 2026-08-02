@@ -144,9 +144,16 @@ export default function WatchParty({ videoId, videoRef, onClose }: any) {
           Watch party
           {joined && <span className="text-gray-500">({participantList.length + 1})</span>}
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          Close
-        </Button>
+        <div className="flex items-center gap-1">
+          {joined && (
+            <Button size="icon" className={controlBtn} title="Invite more people" onClick={copyInvite}>
+              <Copy className="w-4 h-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Close
+          </Button>
+        </div>
       </div>
 
       {!joined ? (
