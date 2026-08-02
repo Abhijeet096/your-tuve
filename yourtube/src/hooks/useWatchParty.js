@@ -22,12 +22,16 @@ export default function useWatchParty({ onVideoSync } = {}) {
   const cameraTrackRef = useRef(null);
   const recorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
+  const joiningRef = useRef(false);
   const onVideoSyncRef = useRef(onVideoSync);
   onVideoSyncRef.current = onVideoSync;
 
+  // Perfect-negotiation pattern so two peers offering at nearly the same
+  // moment don't leave a connection stuck mid-negotiation.
   const createPeer = useCallback((socketId, initiator) => {
     const socket = socketRef.current;
     const pc = new RTCPeerConnection(ICE_SERVERS);
+    const entry = { pc, polite: socket.id < socketId, makingOffer: false, ignoreOffer: false };
 
     localStreamRef.current?.getTracks().forEach((track) => {
       pc.addTrack(track, localStreamRef.current);
@@ -46,21 +50,29 @@ export default function useWatchParty({ onVideoSync } = {}) {
       }));
     };
 
-    peersRef.current.set(socketId, pc);
+    peersRef.current.set(socketId, entry);
 
     if (initiator) {
+      entry.makingOffer = true;
       pc.createOffer()
         .then((offer) => pc.setLocalDescription(offer))
         .then(() => {
           socket.emit("signal", { to: socketId, data: { sdp: pc.localDescription } });
+        })
+        .catch(() => {})
+        .finally(() => {
+          entry.makingOffer = false;
         });
     }
 
-    return pc;
+    return entry;
   }, []);
 
   const join = useCallback(
     async (roomId, name) => {
+      if (joiningRef.current || joined) return;
+      joiningRef.current = true;
+
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStreamRef.current = stream;
       cameraTrackRef.current = stream.getVideoTracks()[0];
@@ -87,25 +99,43 @@ export default function useWatchParty({ onVideoSync } = {}) {
       });
 
       socket.on("signal", async ({ from, data }) => {
-        let pc = peersRef.current.get(from);
-        if (!pc) pc = createPeer(from, false);
+        let entry = peersRef.current.get(from);
+        if (!entry) entry = createPeer(from, false);
+        const { pc, polite } = entry;
 
-        if (data.sdp) {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          if (data.sdp.type === "offer") {
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socket.emit("signal", { to: from, data: { sdp: pc.localDescription } });
+        try {
+          if (data.sdp) {
+            const isOffer = data.sdp.type === "offer";
+            const collision = isOffer && (entry.makingOffer || pc.signalingState !== "stable");
+            entry.ignoreOffer = !polite && collision;
+            if (entry.ignoreOffer) return;
+
+            if (collision) {
+              await Promise.all([
+                pc.setLocalDescription({ type: "rollback" }),
+                pc.setRemoteDescription(new RTCSessionDescription(data.sdp)),
+              ]);
+            } else {
+              await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+            }
+
+            if (isOffer) {
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              socket.emit("signal", { to: from, data: { sdp: pc.localDescription } });
+            }
+          } else if (data.candidate) {
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+            } catch (err) {
+              if (!entry.ignoreOffer) throw err;
+            }
           }
-        } else if (data.candidate) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-          } catch {}
-        }
+        } catch {}
       });
 
       socket.on("participant-left", ({ socketId }) => {
-        peersRef.current.get(socketId)?.close();
+        peersRef.current.get(socketId)?.pc.close();
         peersRef.current.delete(socketId);
         setParticipants((prev) => {
           const next = { ...prev };
@@ -131,8 +161,9 @@ export default function useWatchParty({ onVideoSync } = {}) {
 
       socket.emit("join-party", { roomId, name });
       setJoined(true);
+      joiningRef.current = false;
     },
-    [createPeer]
+    [createPeer, joined]
   );
 
   const leave = useCallback(() => {
@@ -147,7 +178,7 @@ export default function useWatchParty({ onVideoSync } = {}) {
     socket?.off("video-sync");
     socket?.disconnect();
 
-    peersRef.current.forEach((pc) => pc.close());
+    peersRef.current.forEach((entry) => entry.pc.close());
     peersRef.current.clear();
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
 
@@ -198,15 +229,15 @@ export default function useWatchParty({ onVideoSync } = {}) {
     const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
     const screenTrack = screenStream.getVideoTracks()[0];
 
-    peersRef.current.forEach((pc) => {
-      const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+    peersRef.current.forEach((entry) => {
+      const sender = entry.pc.getSenders().find((s) => s.track?.kind === "video");
       sender?.replaceTrack(screenTrack);
     });
 
     setScreenSharing(true);
     screenTrack.onended = () => {
-      peersRef.current.forEach((pc) => {
-        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+      peersRef.current.forEach((entry) => {
+        const sender = entry.pc.getSenders().find((s) => s.track?.kind === "video");
         sender?.replaceTrack(cameraTrackRef.current);
       });
       setScreenSharing(false);

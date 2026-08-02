@@ -13,10 +13,14 @@ import {
   Square,
   Copy,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useUser } from "@/lib/AuthContext";
 import useWatchParty from "@/hooks/useWatchParty";
+
+const controlBtn = "border bg-white text-gray-700 hover:bg-gray-100";
+const controlBtnActive = "border bg-black text-white hover:bg-black/90";
 
 function Tile({ stream, muted, label, cameraOff }: any) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -44,6 +48,7 @@ function Tile({ stream, muted, label, cameraOff }: any) {
 export default function WatchParty({ videoId, videoRef, onClose }: any) {
   const { user } = useUser();
   const [chatInput, setChatInput] = useState("");
+  const [joining, setJoining] = useState(false);
   const applyingRemoteRef = useRef(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -108,13 +113,25 @@ export default function WatchParty({ videoId, videoRef, onClose }: any) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleJoin = () => {
-    join(videoId, user?.name || "Guest");
+  const handleJoin = async () => {
+    setJoining(true);
+    try {
+      await join(videoId, user?.name || "Guest");
+    } catch (err: any) {
+      toast.error(err?.message || "Couldn't access camera/mic. Check browser permissions.");
+    } finally {
+      setJoining(false);
+    }
   };
 
-  const copyInvite = () => {
+  const copyInvite = async () => {
     const url = `${window.location.origin}/watch/${videoId}?party=1`;
-    navigator.clipboard.writeText(url);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Invite link copied");
+    } catch {
+      toast.error("Couldn't copy — copy it manually: " + url);
+    }
   };
 
   const participantList = Object.entries(participants);
@@ -137,8 +154,10 @@ export default function WatchParty({ videoId, videoRef, onClose }: any) {
           <p className="text-sm text-gray-600 text-center">
             Invite friends to watch this video together with live video and chat.
           </p>
-          <Button onClick={handleJoin}>Join call</Button>
-          <Button variant="outline" size="sm" className="gap-2" onClick={copyInvite}>
+          <Button onClick={handleJoin} disabled={joining}>
+            {joining ? "Joining..." : "Join call"}
+          </Button>
+          <Button size="sm" className={`gap-2 ${controlBtn}`} onClick={copyInvite}>
             <Copy className="w-4 h-4" />
             Copy invite link
           </Button>
@@ -159,28 +178,36 @@ export default function WatchParty({ videoId, videoRef, onClose }: any) {
           </div>
 
           <div className="flex items-center justify-center gap-2 py-2 border-b">
-            <Button variant={muted ? "secondary" : "outline"} size="icon" onClick={toggleMute}>
+            <Button
+              size="icon"
+              className={muted ? controlBtnActive : controlBtn}
+              onClick={toggleMute}
+            >
               {muted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
             </Button>
-            <Button variant={cameraOff ? "secondary" : "outline"} size="icon" onClick={toggleCamera}>
+            <Button
+              size="icon"
+              className={cameraOff ? controlBtnActive : controlBtn}
+              onClick={toggleCamera}
+            >
               {cameraOff ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
             </Button>
             <Button
-              variant={screenSharing ? "secondary" : "outline"}
               size="icon"
+              className={screenSharing ? controlBtnActive : controlBtn}
               onClick={shareScreen}
             >
               <MonitorUp className="w-4 h-4" />
             </Button>
             <Button
-              variant={recording ? "secondary" : "outline"}
               size="icon"
+              className={recording ? controlBtnActive : controlBtn}
               onClick={recording ? stopRecording : startRecording}
               title="Record locally"
             >
               {recording ? <Square className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
             </Button>
-            <Button variant="destructive" size="icon" onClick={leave}>
+            <Button size="icon" className="bg-red-600 text-white hover:bg-red-700" onClick={leave}>
               <PhoneOff className="w-4 h-4" />
             </Button>
           </div>
