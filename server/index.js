@@ -11,6 +11,7 @@ import likeroutes from "./routes/like.js";
 import watchlaterroutes from "./routes/watchlater.js";
 import historyrroutes from "./routes/history.js";
 import commentroutes from "./routes/comment.js";
+import downloadroutes from "./routes/download.js";
 import attachWatchParty from "./socket/watchparty.js";
 dotenv.config();
 const app = express();
@@ -29,6 +30,7 @@ app.use("/like", likeroutes);
 app.use("/watch", watchlaterroutes);
 app.use("/history", historyrroutes);
 app.use("/comment", commentroutes);
+app.use("/download", downloadroutes);
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*" },

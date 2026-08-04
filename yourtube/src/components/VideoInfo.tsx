@@ -10,6 +10,7 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
 
@@ -21,6 +22,8 @@ const VideoInfo = ({ video }: any) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const { user } = useUser();
   const [isWatchLater, setIsWatchLater] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadsLeft, setDownloadsLeft] = useState<number | null>(null);
 
   // const user: any = {
   //   id: "1",
@@ -51,6 +54,40 @@ const VideoInfo = ({ video }: any) => {
     };
     handleviews();
   }, [user]);
+  useEffect(() => {
+    if (!user) {
+      setDownloadsLeft(null);
+      return;
+    }
+    axiosInstance
+      .get(`/download/status/${user._id}`)
+      .then((res) => setDownloadsLeft(res.data.remaining))
+      .catch(() => {});
+  }, [user]);
+  const handleDownload = async () => {
+    if (!user) {
+      toast.error("Sign in to download videos");
+      return;
+    }
+    setDownloading(true);
+    try {
+      const res = await axiosInstance.post(`/download/${video._id}`, {
+        userId: user._id,
+      });
+      const link = document.createElement("a");
+      link.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/${video.filepath}`;
+      link.download = video.filename || video.videotitle;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setDownloadsLeft(res.data.remaining);
+      toast.success(`Downloaded — ${res.data.remaining} left today`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Couldn't download this video");
+    } finally {
+      setDownloading(false);
+    }
+  };
   const handleLike = async () => {
     if (!user) return;
     try {
@@ -179,9 +216,20 @@ const VideoInfo = ({ video }: any) => {
             variant="ghost"
             size="sm"
             className="bg-gray-100 rounded-full"
+            onClick={handleDownload}
+            disabled={downloading || downloadsLeft === 0}
+            title={
+              downloadsLeft !== null
+                ? `${downloadsLeft} download${downloadsLeft === 1 ? "" : "s"} left today`
+                : undefined
+            }
           >
             <Download className="w-5 h-5 mr-2" />
-            Download
+            {downloading
+              ? "Downloading..."
+              : downloadsLeft === 0
+              ? "Limit reached"
+              : "Download"}
           </Button>
           <Button
             variant="ghost"
