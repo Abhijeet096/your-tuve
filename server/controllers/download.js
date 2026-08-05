@@ -1,7 +1,8 @@
 import download from "../Modals/download.js";
 import users from "../Modals/Auth.js";
+import { plans } from "../lib/plans.js";
 
-const planlimits = { free: 1, premium: 5, pro: 20 };
+const downloadlimit = (plan) => plans[plan]?.downloadsPerDay ?? plans.free.downloadsPerDay;
 
 const startofday = () => {
   const d = new Date();
@@ -17,7 +18,7 @@ export const handledownload = async (req, res) => {
     if (!viewer) {
       return res.status(404).json({ message: "User not found" });
     }
-    const limit = planlimits[viewer.plan] || planlimits.free;
+    const limit = downloadlimit(viewer.plan);
 
     const todaycount = await download.countDocuments({
       viewer: userId,
@@ -70,7 +71,7 @@ export const getdownloadstatus = async (req, res) => {
     if (!viewer) {
       return res.status(404).json({ message: "User not found" });
     }
-    const limit = planlimits[viewer.plan] || planlimits.free;
+    const limit = downloadlimit(viewer.plan);
     const used = await download.countDocuments({
       viewer: userId,
       createdAt: { $gte: startofday() },
@@ -81,25 +82,6 @@ export const getdownloadstatus = async (req, res) => {
       used,
       remaining: Math.max(limit - used, 0),
     });
-  } catch (error) {
-    console.error(" error:", error);
-    return res.status(500).json({ message: "Something went wrong" });
-  }
-};
-
-export const updateplan = async (req, res) => {
-  const { userId } = req.params;
-  const { plan } = req.body;
-  if (!planlimits[plan]) {
-    return res.status(400).json({ message: "Invalid plan" });
-  }
-  try {
-    const updateduser = await users.findByIdAndUpdate(
-      userId,
-      { $set: { plan } },
-      { new: true }
-    );
-    return res.status(200).json(updateduser);
   } catch (error) {
     console.error(" error:", error);
     return res.status(500).json({ message: "Something went wrong" });

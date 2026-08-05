@@ -5,11 +5,8 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Download as DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
-
-const planlimits: Record<string, number> = { free: 1, premium: 5, pro: 20 };
 
 export default function DownloadsContent() {
   const [downloads, setDownloads] = useState<any[]>([]);
@@ -48,17 +45,6 @@ export default function DownloadsContent() {
     }
   };
 
-  const changePlan = async (plan: string) => {
-    if (!user) return;
-    try {
-      await axiosInstance.patch(`/download/plan/${user._id}`, { plan });
-      toast.success(`Switched to ${plan} plan`);
-      loadStatus();
-    } catch (error) {
-      toast.error("Couldn't change plan");
-    }
-  };
-
   if (loading) {
     return <div>Loading downloads...</div>;
   }
@@ -83,19 +69,9 @@ export default function DownloadsContent() {
               {status ? `${status.used} of ${status.limit} downloads used today` : "..."}
             </p>
           </div>
-          <div className="flex gap-2">
-            {Object.keys(planlimits).map((plan) => (
-              <Button
-                key={plan}
-                size="sm"
-                variant={status?.plan === plan ? "default" : "outline"}
-                className={status?.plan === plan ? "" : "border bg-white text-gray-700"}
-                onClick={() => changePlan(plan)}
-              >
-                {plan} ({planlimits[plan]}/day)
-              </Button>
-            ))}
-          </div>
+          <Link href="/subscription">
+            <Button size="sm">Upgrade plan</Button>
+          </Link>
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+import AdBanner from "@/components/AdBanner";
 import Comments from "@/components/Comments";
 import RelatedVideos from "@/components/RelatedVideos";
 import VideoInfo from "@/components/VideoInfo";
@@ -6,6 +7,7 @@ import WatchParty from "@/components/WatchParty";
 import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
 import axiosInstance from "@/lib/axiosinstance";
+import { useUser } from "@/lib/AuthContext";
 import { notFound } from "next/navigation";
 import { useRouter } from "next/router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -18,6 +20,8 @@ const index = () => {
   const [loading, setloading] = useState(true);
   const [partyOpen, setPartyOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { user } = useUser();
+  const adFreePlans = ["silver", "gold"];
 
   useEffect(() => {
     if (router.query.party === "1") setPartyOpen(true);
@@ -81,9 +85,14 @@ const index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
             <Videopplayer video={videos} ref={videoRef} />
+            {!adFreePlans.includes(user?.plan) && <AdBanner />}
             <VideoInfo video={videos} />
             {!partyOpen && (
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => setPartyOpen(true)}>
+              <Button
+                size="sm"
+                className="gap-2 border bg-white text-gray-700 hover:bg-gray-100"
+                onClick={() => setPartyOpen(true)}
+              >
                 <Users className="w-4 h-4" />
                 Watch party
               </Button>

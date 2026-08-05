@@ -132,6 +132,9 @@ const Header = ({ onMenuClick }: { onMenuClick: () => void }) => {
                 <DropdownMenuItem asChild>
                   <Link href="/downloads">Downloads</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/subscription">Upgrade plan</Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
