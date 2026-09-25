@@ -152,7 +152,7 @@ const VideoInfo = ({ video }: any) => {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{video.videotitle}</h1>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="w-10 h-10">
             <AvatarFallback>{video.videochanel[0]}</AvatarFallback>
@@ -163,7 +163,7 @@ const VideoInfo = ({ video }: any) => {
           </div>
           <Button className="ml-4">Subscribe</Button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center bg-gray-100 rounded-full">
             <Button
               variant="ghost"
