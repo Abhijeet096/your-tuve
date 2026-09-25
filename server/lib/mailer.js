@@ -2,6 +2,8 @@ import nodemailer from "nodemailer";
 
 let transporterPromise;
 
+const sender = (name) => `"${name}" <${process.env.SMTP_USER || "noreply@yourtube.local"}>`;
+
 const getTransporter = async () => {
   if (transporterPromise) return transporterPromise;
 
@@ -10,7 +12,7 @@ const getTransporter = async () => {
       nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: Number(process.env.SMTP_PORT) || 587,
-        secure: false,
+        secure: Number(process.env.SMTP_PORT) === 465,
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
@@ -38,7 +40,7 @@ export const sendInvoiceEmail = async ({ to, plan, amount, paymentId, orderId })
   const rupees = (amount / 100).toFixed(2);
 
   const info = await transporter.sendMail({
-    from: '"YourTube" <billing@yourtube.local>',
+    from: sender("YourTube Billing"),
     to,
     subject: `Your YourTube ${plan} plan is active`,
     html: `
@@ -65,7 +67,7 @@ export const sendOtpEmail = async ({ to, otp, city, state, device }) => {
   const where = [city, state].filter(Boolean).join(", ") || "an unknown location";
 
   const info = await transporter.sendMail({
-    from: '"YourTube" <security@yourtube.local>',
+    from: sender("YourTube Security"),
     to,
     subject: `${otp} is your YourTube verification code`,
     html: `
