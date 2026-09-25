@@ -13,6 +13,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
+import { downloadurl } from "@/lib/media";
 
 const VideoInfo = ({ video }: any) => {
   const [likes, setlikes] = useState(video.Like || 0);
@@ -75,7 +76,7 @@ const VideoInfo = ({ video }: any) => {
         userId: user._id,
       });
       const link = document.createElement("a");
-      link.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/${video.filepath}`;
+      link.href = downloadurl(video.filepath);
       link.download = video.filename || video.videotitle;
       document.body.appendChild(link);
       link.click();

@@ -7,6 +7,7 @@ import { Download as DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axiosInstance from "@/lib/axiosinstance";
 import { useUser } from "@/lib/AuthContext";
+import { videourl } from "@/lib/media";
 
 export default function DownloadsContent() {
   const [downloads, setDownloads] = useState<any[]>([]);
@@ -92,7 +93,7 @@ export default function DownloadsContent() {
               <Link href={`/watch/${item.videoid._id}`} className="flex-shrink-0">
                 <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden">
                   <video
-                    src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${item.videoid?.filepath}`}
+                    src={videourl(item.videoid?.filepath)}
                     className="object-cover group-hover:scale-105 transition-transform duration-200"
                   />
                 </div>

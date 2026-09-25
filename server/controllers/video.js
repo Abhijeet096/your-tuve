@@ -1,4 +1,5 @@
 import video from "../Modals/video.js";
+import { storevideo } from "../lib/storage.js";
 
 export const uploadvideo = async (req, res) => {
   if (req.file === undefined) {
@@ -7,10 +8,11 @@ export const uploadvideo = async (req, res) => {
       .json({ message: "plz upload a mp4 video file only" });
   } else {
     try {
+      const filepath = await storevideo(req.file);
       const file = new video({
         videotitle: req.body.videotitle,
         filename: req.file.originalname,
-        filepath: req.file.path,
+        filepath: filepath,
         filetype: req.file.mimetype,
         filesize: req.file.size,
         videochanel: req.body.videochanel,

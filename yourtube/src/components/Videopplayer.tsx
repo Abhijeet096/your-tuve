@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useUser } from "@/lib/AuthContext";
+import { videourl } from "@/lib/media";
 
 const FREE_WATCH_CAP_SECONDS = 60;
 const SEEK_STEP = 10;
@@ -285,7 +286,7 @@ const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(function Vide
     >
       <video
         ref={localRef}
-        src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${video?.filepath}`}
+        src={videourl(video?.filepath)}
         className="w-full h-full"
         playsInline
         preload="metadata"
