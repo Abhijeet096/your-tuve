@@ -30,8 +30,11 @@ export const createOrder = async (req, res) => {
       keyId: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
-    console.error(" error:", error);
-    return res.status(500).json({ message: "Couldn't start payment" });
+    console.error("Razorpay order error:", error);
+    const reason = error?.error?.description;
+    return res.status(500).json({
+      message: reason ? `Couldn't start payment: ${reason}` : "Couldn't start payment",
+    });
   }
 };
 

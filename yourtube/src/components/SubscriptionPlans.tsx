@@ -70,8 +70,8 @@ export default function SubscriptionPlans() {
         toast.error("Payment failed");
       });
       razorpay.open();
-    } catch (error) {
-      toast.error("Couldn't start payment");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Couldn't start payment");
     } finally {
       setUpgrading(null);
     }
