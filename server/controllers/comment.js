@@ -193,12 +193,15 @@ export const translatecomment = async (req, res) => {
   const key = `${target}:${text}`;
   if (translatecache.has(key)) return res.status(200).json(translatecache.get(key));
   try {
+    const contact = process.env.MYMEMORY_EMAIL || process.env.SMTP_USER;
     const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
       text.slice(0, 500)
-    )}&langpair=Autodetect|${encodeURIComponent(target)}`;
+    )}&langpair=Autodetect|${encodeURIComponent(target)}${
+      contact ? `&de=${encodeURIComponent(contact)}` : ""
+    }`;
     const response = await fetch(url);
     const data = await response.json();
-    if (data.responseStatus !== 200 || !data.responseData?.translatedText) {
+    if (data.quotaFinished || data.responseStatus !== 200 || !data.responseData?.translatedText) {
       return res.status(502).json({ message: data.responseDetails || "Translation failed" });
     }
     const result = {

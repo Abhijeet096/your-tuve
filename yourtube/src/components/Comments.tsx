@@ -228,13 +228,26 @@ const Comments = ({ videoId }: any) => {
     }
     setTranslating(comment._id);
     try {
-      const res = await axiosInstance.post("/comment/translate", {
-        text: comment.commentbody,
-        target: targetLang,
-      });
-      setTranslations((prev) => ({ ...prev, [comment._id]: res.data.translated }));
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Translation failed");
+      let translated = "";
+      try {
+        const res = await axiosInstance.post("/comment/translate", {
+          text: comment.commentbody,
+          target: targetLang,
+        });
+        translated = res.data.translated;
+      } catch {
+        const res = await fetch(
+          `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
+            comment.commentbody.slice(0, 500)
+          )}&langpair=Autodetect|${targetLang}`
+        );
+        const data = await res.json();
+        if (data.quotaFinished || data.responseStatus !== 200) throw new Error();
+        translated = data.responseData.translatedText;
+      }
+      setTranslations((prev) => ({ ...prev, [comment._id]: translated }));
+    } catch {
+      toast.error("Translation isn't available right now, try again later");
     } finally {
       setTranslating(null);
     }
