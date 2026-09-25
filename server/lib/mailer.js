@@ -59,3 +59,27 @@ export const sendInvoiceEmail = async ({ to, plan, amount, paymentId, orderId })
   if (previewUrl) console.log("Invoice email preview:", previewUrl);
   return { messageId: info.messageId, previewUrl: previewUrl || null };
 };
+
+export const sendOtpEmail = async ({ to, otp, city, state, device }) => {
+  const transporter = await getTransporter();
+  const where = [city, state].filter(Boolean).join(", ") || "an unknown location";
+
+  const info = await transporter.sendMail({
+    from: '"YourTube" <security@yourtube.local>',
+    to,
+    subject: `${otp} is your YourTube verification code`,
+    html: `
+      <h2>New sign-in detected</h2>
+      <p>Someone is signing in to your YourTube account from <b>${where}</b>${
+        device ? ` on <b>${device}</b>` : ""
+      }.</p>
+      <p>Your verification code is:</p>
+      <p style="font-size:28px;letter-spacing:6px;font-weight:bold">${otp}</p>
+      <p>The code expires in 5 minutes. If this wasn't you, ignore this email.</p>
+    `,
+  });
+
+  const previewUrl = nodemailer.getTestMessageUrl(info);
+  if (previewUrl) console.log("OTP email preview:", previewUrl);
+  return { messageId: info.messageId, previewUrl: previewUrl || null };
+};

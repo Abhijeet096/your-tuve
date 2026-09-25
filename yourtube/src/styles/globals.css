@@ -78,13 +78,6 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -132,4 +125,62 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+html {
+  transition: background-color 0.2s ease;
+}
+
+.dark .bg-white {
+  background-color: var(--background);
+}
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: oklch(0.24 0 0);
+}
+.dark .bg-gray-200,
+.dark .bg-gray-300 {
+  background-color: oklch(0.3 0 0);
+}
+.dark .text-black {
+  color: var(--foreground);
+}
+.dark .text-gray-700,
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  color: oklch(0.88 0 0);
+}
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: oklch(0.72 0 0);
+}
+.dark .hover\:bg-gray-100:hover,
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-white:hover {
+  background-color: oklch(0.3 0 0);
+}
+.dark .hover\:bg-gray-200:hover {
+  background-color: oklch(0.35 0 0);
+}
+.dark .hover\:text-black:hover {
+  color: var(--foreground);
+}
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: var(--border);
+}
+.dark .bg-blue-100 {
+  background-color: oklch(0.3 0.08 260);
+}
+.dark .bg-red-100 {
+  background-color: oklch(0.3 0.08 25);
+}
+.dark .text-blue-600 {
+  color: oklch(0.72 0.14 255);
+}
+
+.dark .aspect-video .bg-white,
+.dark .aspect-video.bg-black .text-black {
+  background-color: #fff;
+  color: #000;
 }

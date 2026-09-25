@@ -61,7 +61,7 @@ export const verifyPayment = async (req, res) => {
     const viewer = await users.findByIdAndUpdate(
       userId,
       { $set: { plan } },
-      { new: true }
+      { new: true, projection: { pendingotp: 0 } }
     );
     if (!viewer) {
       return res.status(404).json({ message: "User not found" });

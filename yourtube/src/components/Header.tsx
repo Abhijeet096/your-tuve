@@ -1,4 +1,4 @@
-import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
+import { Bell, Check, Menu, Mic, Moon, Search, Sun, User, VideoIcon } from "lucide-react";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
@@ -16,7 +17,8 @@ import { useRouter } from "next/router";
 import { useUser } from "@/lib/AuthContext";
 
 const Header = ({ onMenuClick }: { onMenuClick: () => void }) => {
-  const { user, logout, handlegooglesignin } = useUser();
+  const { user, logout, handlegooglesignin, theme, setTheme } = useUser();
+  const themechoice = user?.themesource === "manual" ? user.theme : "auto";
   // const user: any = {
   //   id: "1",
   //   name: "John Doe",
@@ -38,7 +40,7 @@ const Header = ({ onMenuClick }: { onMenuClick: () => void }) => {
     }
   };
   return (
-    <header className="flex items-center justify-between gap-2 px-2 sm:px-4 py-2 bg-white border-b">
+    <header className="flex items-center justify-between gap-2 px-2 sm:px-4 py-2 bg-background border-b">
       <div className="flex items-center gap-1 sm:gap-4">
         <Button variant="ghost" size="icon" onClick={onMenuClick}>
           <Menu className="w-6 h-6" />
@@ -83,6 +85,32 @@ const Header = ({ onMenuClick }: { onMenuClick: () => void }) => {
         </Button>
       </Link>
       <div className="flex items-center gap-1 sm:gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" title="Theme">
+              {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel>Theme</DropdownMenuLabel>
+            {[
+              { value: "auto", label: "Automatic", hint: "Light 10 AM - 12 PM IST" },
+              { value: "light", label: "Light" },
+              { value: "dark", label: "Dark" },
+            ].map((opt) => (
+              <DropdownMenuItem key={opt.value} onClick={() => setTheme(opt.value)}>
+                <Check className={`w-4 h-4 ${themechoice === opt.value ? "" : "invisible"}`} />
+                <div className="flex flex-col">
+                  <span>{opt.label}</span>
+                  {opt.hint && <span className="text-xs text-gray-500">{opt.hint}</span>}
+                </div>
+              </DropdownMenuItem>
+            ))}
+            {!user && (
+              <p className="px-2 py-1.5 text-xs text-gray-500">Sign in to save your choice</p>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         {user ? (
           <>
             <Button variant="ghost" size="icon" className="hidden sm:inline-flex">

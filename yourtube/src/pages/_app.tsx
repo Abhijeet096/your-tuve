@@ -1,5 +1,6 @@
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Header from "@/components/Header";
+import OtpDialog from "@/components/OtpDialog";
 import Sidebar from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import "@/styles/globals.css";
@@ -10,10 +11,11 @@ export default function App({ Component, pageProps }: AppProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     <UserProvider>
-      <div className="min-h-screen bg-white text-black overflow-x-hidden">
+      <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
         <title>Your-Tube Clone</title>
         <Header onMenuClick={() => setSidebarOpen((v) => !v)} />
         <Toaster />
+        <OtpDialog />
         <div className="flex">
           <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <div className="flex-1 min-w-0">
