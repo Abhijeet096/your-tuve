@@ -31,3 +31,20 @@ export const storevideo = async (file) => {
     await fs.unlink(file.path).catch(() => {});
   }
 };
+
+export const removevideo = async (filepath) => {
+  if (!filepath) return;
+  if (/res\.cloudinary\.com/.test(filepath)) {
+    const match = filepath.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i);
+    if (!match || !configured()) return;
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+      secure: true,
+    });
+    await cloudinary.uploader.destroy(match[1], { resource_type: "video" }).catch(() => {});
+    return;
+  }
+  await fs.unlink(filepath.replace(/\\/g, "/")).catch(() => {});
+};
