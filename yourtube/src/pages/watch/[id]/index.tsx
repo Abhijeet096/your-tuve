@@ -23,6 +23,14 @@ const index = () => {
   const { user } = useUser();
   const adFreePlans = ["silver", "gold"];
 
+  const nextVideo = useMemo(() => {
+    if (!video?.length || !videos) return null;
+    const others = video.filter((v: any) => v._id !== videos._id);
+    if (!others.length) return null;
+    const pos = video.findIndex((v: any) => v._id === videos._id);
+    return video.slice(pos + 1).find((v: any) => v._id !== videos._id) || others[0];
+  }, [video, videos]);
+
   useEffect(() => {
     if (router.query.party === "1") setPartyOpen(true);
   }, [router.query.party]);
@@ -84,7 +92,7 @@ const index = () => {
       <div className="max-w-7xl mx-auto p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <Videopplayer video={videos} ref={videoRef} />
+            <Videopplayer video={videos} nextVideo={nextVideo} ref={videoRef} />
             {!adFreePlans.includes(user?.plan) && <AdBanner />}
             <VideoInfo video={videos} />
             {!partyOpen && (
@@ -103,7 +111,7 @@ const index = () => {
             {partyOpen && typeof id === "string" && (
               <WatchParty videoId={id} videoRef={videoRef} onClose={() => setPartyOpen(false)} />
             )}
-            <RelatedVideos videos={video} />
+            <RelatedVideos videos={video.filter((v: any) => v._id !== videos._id)} />
           </div>
         </div>
       </div>
