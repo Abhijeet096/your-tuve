@@ -1,8 +1,24 @@
 import { useCallback, useRef, useState } from "react";
 import { getSocket } from "@/lib/socket";
 
+const turnurls = (process.env.NEXT_PUBLIC_TURN_URLS || "")
+  .split(",")
+  .map((u) => u.trim())
+  .filter(Boolean);
+
 const ICE_SERVERS = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  iceServers: [
+    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+    ...(turnurls.length
+      ? [
+          {
+            urls: turnurls,
+            username: process.env.NEXT_PUBLIC_TURN_USERNAME,
+            credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
+          },
+        ]
+      : []),
+  ],
 };
 
 export default function useWatchParty({ onVideoSync } = {}) {
