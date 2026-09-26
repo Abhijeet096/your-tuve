@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import crypto from "crypto";
 import users from "../Modals/Auth.js";
 import { sendOtpEmail } from "../lib/mailer.js";
+import { syncplan } from "../lib/plans.js";
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
@@ -45,6 +46,7 @@ const remember = (u, { city, state, country, deviceid, devicelabel }) => {
 };
 
 const finishlogin = async (u, context) => {
+  await syncplan(u);
   remember(u, context);
   u.pendingotp = undefined;
   if (u.themesource !== "manual") u.theme = themeforist();

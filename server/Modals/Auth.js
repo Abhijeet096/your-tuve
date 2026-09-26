@@ -6,6 +6,7 @@ const userschema = mongoose.Schema({
   description: { type: String },
   image: { type: String },
   plan: { type: String, enum: ["free", "bronze", "silver", "gold"], default: "free" },
+  planexpires: { type: Date },
   theme: { type: String, enum: ["light", "dark"], default: "dark" },
   themesource: { type: String, enum: ["auto", "manual"], default: "auto" },
   knownlocations: [

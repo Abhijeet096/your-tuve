@@ -72,7 +72,7 @@ const deliver = async ({ fromname, to, subject, html }) => {
   return { messageId: info.messageId, previewUrl: previewUrl || null };
 };
 
-export const sendInvoiceEmail = async ({ to, plan, amount, paymentId, orderId }) => {
+export const sendInvoiceEmail = async ({ to, plan, amount, paymentId, orderId, validtill }) => {
   const rupees = (amount / 100).toFixed(2);
 
   return deliver({
@@ -88,6 +88,16 @@ export const sendInvoiceEmail = async ({ to, plan, amount, paymentId, orderId })
         <tr><td>Payment ID</td><td>${paymentId}</td></tr>
         <tr><td>Order ID</td><td>${orderId}</td></tr>
         <tr><td>Date</td><td>${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</td></tr>
+        ${
+          validtill
+            ? `<tr><td>Valid till</td><td>${new Date(validtill).toLocaleDateString("en-IN", {
+                timeZone: "Asia/Kolkata",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}</td></tr>`
+            : ""
+        }
       </table>
       <p>Your new plan benefits are active immediately.</p>
     `,

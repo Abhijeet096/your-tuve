@@ -53,7 +53,6 @@ export default function SubscriptionPlans() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              plan,
               userId: user._id,
             });
             login(verifyRes.data.user);
@@ -86,7 +85,9 @@ export default function SubscriptionPlans() {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {order.map((key) => {
         const plan = plans[key];
-        const isCurrent = (user?.plan || "free") === key;
+        const current = user?.plan || "free";
+        const isCurrent = current === key;
+        const isIncluded = order.indexOf(key) < order.indexOf(current);
         return (
           <div key={key} className="border rounded-lg p-5 flex flex-col gap-3 bg-white">
             <h3 className="text-lg font-semibold capitalize">{plan.label}</h3>
@@ -110,16 +111,26 @@ export default function SubscriptionPlans() {
                 {plan.adFree ? "Ad-free viewing" : "Includes ads"}
               </li>
             </ul>
+            {isCurrent && key !== "free" && user?.planexpires && (
+              <p className="text-xs text-gray-500">
+                Active till{" "}
+                {new Date(user.planexpires).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </p>
+            )}
             <Button
               className="w-full"
-              variant={isCurrent ? "outline" : "default"}
-              disabled={isCurrent || key === "free" || upgrading === key}
+              variant={isCurrent || isIncluded ? "outline" : "default"}
+              disabled={isCurrent || isIncluded || key === "free" || upgrading === key}
               onClick={() => upgrade(key)}
             >
               {isCurrent
                 ? "Current plan"
-                : key === "free"
-                ? "Default plan"
+                : isIncluded
+                ? "Included in your plan"
                 : upgrading === key
                 ? "Processing..."
                 : "Upgrade"}

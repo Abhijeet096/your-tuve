@@ -6,3 +6,21 @@ export const plans = {
 };
 
 export const isPaidPlan = (plan) => plan !== "free" && !!plans[plan] && plans[plan].price > 0;
+
+export const PLAN_DAYS = 30;
+
+const rank = { free: 0, bronze: 1, silver: 2, gold: 3 };
+export const planrank = (plan) => rank[plan] ?? 0;
+
+export const syncplan = async (user) => {
+  if (!user || user.plan === "free") return user;
+  if (!user.planexpires) {
+    user.planexpires = new Date(Date.now() + PLAN_DAYS * 24 * 60 * 60 * 1000);
+    await user.save();
+  } else if (user.planexpires < new Date()) {
+    user.plan = "free";
+    user.planexpires = undefined;
+    await user.save();
+  }
+  return user;
+};
