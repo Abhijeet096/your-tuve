@@ -6,6 +6,7 @@ import axiosInstance from "./axiosinstance";
 import { useEffect, useContext } from "react";
 import { getlocation } from "./location";
 import { applytheme, getdevice, themeforist } from "./theme";
+import { toast } from "sonner";
 
 const UserContext = createContext();
 
@@ -55,8 +56,7 @@ export const UserProvider = ({ children }) => {
 
   const handlegooglesignin = async () => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      await serverlogin(result.user);
+      await signInWithPopup(auth, provider);
     } catch (error) {
       console.error(error);
     }
@@ -106,6 +106,7 @@ export const UserProvider = ({ children }) => {
           await serverlogin(firebaseuser);
         } catch (error) {
           console.error(error);
+          if (error?.response?.data?.message) toast.error(error.response.data.message);
           logout();
         }
       }
