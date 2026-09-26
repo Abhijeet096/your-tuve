@@ -18,8 +18,8 @@ const VideoUploader = ({ channelId, channelName, onUploaded }: any) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (!file.type.startsWith("video/")) {
-        toast.error("Please upload a valid video file.");
+      if (file.type !== "video/mp4") {
+        toast.error("Only MP4 videos are supported.");
         return;
       }
       if (file.size > 100 * 1024 * 1024) {
@@ -103,13 +103,13 @@ const VideoUploader = ({ channelId, channelName, onUploaded }: any) => {
               or click to select files
             </p>
             <p className="text-xs text-gray-400 mt-4">
-              MP4, WebM, MOV or AVI • Up to 100MB
+              MP4 only • Up to 100MB
             </p>
             <input
               type="file"
               ref={fileInputRef}
               className="hidden"
-              accept="video/*"
+              accept="video/mp4"
               onChange={handlefilechange}
             />
           </div>
