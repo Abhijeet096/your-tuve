@@ -1,20 +1,22 @@
 import download from "../Modals/download.js";
 import users from "../Modals/Auth.js";
-import { plans } from "../lib/plans.js";
+import { plans, syncplan } from "../lib/plans.js";
 
 const downloadlimit = (plan) => plans[plan]?.downloadsPerDay ?? plans.free.downloadsPerDay;
 
+const IST_OFFSET_MS = 330 * 60 * 1000;
+
 const startofday = () => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const ist = new Date(Date.now() + IST_OFFSET_MS);
+  ist.setUTCHours(0, 0, 0, 0);
+  return new Date(ist.getTime() - IST_OFFSET_MS);
 };
 
 export const handledownload = async (req, res) => {
   const { userId } = req.body;
   const { videoId } = req.params;
   try {
-    const viewer = await users.findById(userId);
+    const viewer = await syncplan(await users.findById(userId));
     if (!viewer) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -67,7 +69,7 @@ export const getalldownloads = async (req, res) => {
 export const getdownloadstatus = async (req, res) => {
   const { userId } = req.params;
   try {
-    const viewer = await users.findById(userId);
+    const viewer = await syncplan(await users.findById(userId));
     if (!viewer) {
       return res.status(404).json({ message: "User not found" });
     }
