@@ -4,14 +4,22 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import axiosInstance from "@/lib/axiosinstance";
+import { useUser } from "@/lib/AuthContext";
 
 export default function ReviewPage() {
+  const { user } = useUser();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     try {
-      const res = await axiosInstance.get("/comment/flagged/all");
+      const res = await axiosInstance.get("/comment/flagged/all", {
+        params: { userId: user._id },
+      });
       setItems(res.data);
     } catch (error) {
       console.log(error);
@@ -22,27 +30,29 @@ export default function ReviewPage() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [user?._id]);
 
   const review = async (id: string, action: "keep" | "remove") => {
     try {
-      await axiosInstance.post(`/comment/review/${id}`, { action });
+      await axiosInstance.post(`/comment/review/${id}`, { action, userId: user?._id });
       setItems((prev) => prev.filter((c) => c._id !== id));
       toast.success(action === "remove" ? "Comment removed" : "Comment restored");
-    } catch (error) {
-      toast.error("Something went wrong");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Something went wrong");
     }
   };
 
   return (
     <main className="max-w-4xl mx-auto p-4 space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">Reported comments</h1>
+        <h1 className="text-2xl font-bold">Reported comments on your videos</h1>
         <p className="text-sm text-gray-600">
           Comments with 3 or more reports are hidden behind a warning until someone reviews them.
         </p>
       </div>
-      {loading ? (
+      {!user ? (
+        <p className="text-gray-500">Sign in to review comments reported on your videos.</p>
+      ) : loading ? (
         <p>Loading...</p>
       ) : items.length === 0 ? (
         <p className="text-gray-500">Nothing to review right now.</p>

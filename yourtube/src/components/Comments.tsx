@@ -152,7 +152,7 @@ const Comments = ({ videoId }: any) => {
     try {
       const res = await axiosInstance.post(
         `/comment/editcomment/${editingCommentId}`,
-        { commentbody: editText }
+        { commentbody: editText, userId: user?._id }
       );
       if (res.data) {
         setComments((prev) =>
@@ -175,7 +175,9 @@ const Comments = ({ videoId }: any) => {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await axiosInstance.delete(`/comment/deletecomment/${id}`);
+      const res = await axiosInstance.delete(`/comment/deletecomment/${id}`, {
+        data: { userId: user?._id },
+      });
       if (res.data.comment) {
         setComments((prev) => prev.filter((c) => c._id !== id));
       }

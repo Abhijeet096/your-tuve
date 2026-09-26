@@ -1,6 +1,7 @@
 import comment from "../Modals/comment.js";
 import mongoose from "mongoose";
 import { checkcomment } from "../lib/moderation.js";
+import video from "../Modals/video.js";
 
 const REPORTS_TO_FLAG = 3;
 
@@ -65,10 +66,16 @@ export const getallcomment = async (req, res) => {
 };
 export const deletecomment = async (req, res) => {
   const { id: _id } = req.params;
+  const { userId } = req.body || {};
   if (!mongoose.Types.ObjectId.isValid(_id)) {
     return res.status(404).send("comment unavailable");
   }
   try {
+    const existing = await comment.findById(_id);
+    if (!existing) return res.status(404).json({ message: "Comment not found" });
+    if (!userId || String(existing.userid) !== String(userId)) {
+      return res.status(403).json({ message: "You can only delete your own comments" });
+    }
     await comment.findByIdAndDelete(_id);
     return res.status(200).json({ comment: true });
   } catch (error) {
@@ -79,7 +86,7 @@ export const deletecomment = async (req, res) => {
 
 export const editcomment = async (req, res) => {
   const { id: _id } = req.params;
-  const { commentbody } = req.body;
+  const { commentbody, userId } = req.body;
   if (!mongoose.Types.ObjectId.isValid(_id)) {
     return res.status(404).send("comment unavailable");
   }
@@ -88,6 +95,11 @@ export const editcomment = async (req, res) => {
     return res.status(422).json({ message: problem, blocked: true });
   }
   try {
+    const existing = await comment.findById(_id);
+    if (!existing) return res.status(404).json({ message: "Comment not found" });
+    if (!userId || String(existing.userid) !== String(userId)) {
+      return res.status(403).json({ message: "You can only edit your own comments" });
+    }
     const updatecomment = await comment.findByIdAndUpdate(
       _id,
       { $set: { commentbody: commentbody.trim() } },
@@ -150,9 +162,12 @@ export const reportcomment = async (req, res) => {
 };
 
 export const getflaggedcomments = async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.status(401).json({ message: "Sign in to review comments" });
   try {
+    const myvideos = await video.find({ uploader: String(userId) }).select("_id");
     const flagged = await comment
-      .find({ reports: { $exists: true, $ne: [] } })
+      .find({ videoid: { $in: myvideos.map((v) => v._id) }, reports: { $exists: true, $ne: [] } })
       .sort({ flagged: -1, updatedAt: -1 })
       .populate({ path: "videoid", model: "videofiles", select: "videotitle" });
     return res.status(200).json(flagged);
@@ -164,11 +179,17 @@ export const getflaggedcomments = async (req, res) => {
 
 export const reviewcomment = async (req, res) => {
   const { id: _id } = req.params;
-  const { action } = req.body;
+  const { action, userId } = req.body;
   if (!mongoose.Types.ObjectId.isValid(_id)) {
     return res.status(404).send("comment unavailable");
   }
   try {
+    const existing = await comment.findById(_id);
+    if (!existing) return res.status(404).json({ message: "Comment not found" });
+    const owner = await video.findById(existing.videoid).select("uploader");
+    if (!userId || !owner || String(owner.uploader) !== String(userId)) {
+      return res.status(403).json({ message: "Only the video's owner can review its comments" });
+    }
     if (action === "remove") {
       await comment.findByIdAndDelete(_id);
       return res.status(200).json({ removed: true });
