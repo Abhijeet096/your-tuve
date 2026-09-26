@@ -3,6 +3,9 @@ import watchlater from "../Modals/watchlater.js";
 export const handlewatchlater = async (req, res) => {
   const { userId } = req.body;
   const { videoId } = req.params;
+  if (!userId) {
+    return res.status(401).json({ message: "Sign in to save videos for later" });
+  }
   try {
     const exisitingwatchlater = await watchlater.findOne({
       viewer: userId,

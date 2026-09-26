@@ -113,6 +113,10 @@ const VideoInfo = ({ video }: any) => {
     }
   };
   const handleWatchLater = async () => {
+    if (!user) {
+      toast.error("Sign in to save videos for later");
+      return;
+    }
     try {
       const res = await axiosInstance.post(`/watch/${video._id}`, {
         userId: user?._id,
