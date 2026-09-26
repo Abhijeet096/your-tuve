@@ -1,5 +1,5 @@
-import { Bell, Check, Menu, Mic, Moon, Search, Sun, User, VideoIcon } from "lucide-react";
-import React, { useState } from "react";
+import { ArrowLeft, Bell, Check, Menu, Mic, Moon, Search, Sun, User, VideoIcon } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { Input } from "./ui/input";
@@ -28,10 +28,20 @@ const Header = ({ onMenuClick }: { onMenuClick: () => void }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isdialogeopen, setisdialogeopen] = useState(false);
   const router = useRouter();
+  const [mobileSearch, setMobileSearch] = useState(false);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (mobileSearch) mobileInputRef.current?.focus();
+  }, [mobileSearch]);
+  useEffect(() => {
+    if (typeof router.query.q === "string") setSearchQuery(router.query.q);
+  }, [router.query.q]);
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setMobileSearch(false);
+      mobileInputRef.current?.blur();
     }
   };
   const handleKeypress = (e: React.KeyboardEvent) => {
@@ -39,6 +49,33 @@ const Header = ({ onMenuClick }: { onMenuClick: () => void }) => {
       handleSearch(e as any);
     }
   };
+  if (mobileSearch) {
+    return (
+      <header className="flex items-center gap-2 px-2 py-2 bg-background border-b md:hidden">
+        <Button variant="ghost" size="icon" onClick={() => setMobileSearch(false)} aria-label="Close search">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <form onSubmit={handleSearch} className="flex flex-1 min-w-0">
+          <Input
+            ref={mobileInputRef}
+            type="search"
+            enterKeyHint="search"
+            placeholder="Search YourTube"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="rounded-l-full border-r-0 focus-visible:ring-0 h-10"
+          />
+          <Button
+            type="submit"
+            className="rounded-r-full px-4 h-10 bg-gray-50 hover:bg-gray-100 text-gray-600 border border-l-0"
+            aria-label="Search"
+          >
+            <Search className="w-5 h-5" />
+          </Button>
+        </form>
+      </header>
+    );
+  }
   return (
     <header className="flex items-center justify-between gap-2 px-2 sm:px-4 py-2 bg-background border-b">
       <div className="flex items-center gap-1 sm:gap-4">
@@ -79,11 +116,15 @@ const Header = ({ onMenuClick }: { onMenuClick: () => void }) => {
           <Mic className="w-5 h-5" />
         </Button>
       </form>
-      <Link href="/search" className="md:hidden">
-        <Button variant="ghost" size="icon">
-          <Search className="w-5 h-5" />
-        </Button>
-      </Link>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden ml-auto"
+        onClick={() => setMobileSearch(true)}
+        aria-label="Search"
+      >
+        <Search className="w-5 h-5" />
+      </Button>
       <div className="flex items-center gap-1 sm:gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
