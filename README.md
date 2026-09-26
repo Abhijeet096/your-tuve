@@ -42,6 +42,8 @@ PORT=5000
 DB_URL=mongodb+srv://...
 RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
+BREVO_API_KEY=
+MAIL_FROM=
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=
@@ -51,7 +53,7 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 ```
 
-Without SMTP settings, emails go to an Ethereal test inbox, and the preview link is printed in the console. Without Cloudinary settings, videos are saved in `server/uploads`.
+Emails (OTP and invoices) go through Brevo's HTTPS API when `BREVO_API_KEY` is set, since Render's free plan blocks SMTP. `MAIL_FROM` must be a sender verified in Brevo. Without Brevo it falls back to SMTP, and without SMTP settings emails go to an Ethereal test inbox, with the preview link printed in the console. Without Cloudinary settings, videos are saved in `server/uploads`.
 
 ### yourtube/.env.local
 

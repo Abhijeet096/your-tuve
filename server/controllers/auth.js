@@ -107,7 +107,15 @@ export const login = async (req, res) => {
       context.deviceid && !existingUser.knowndevices.some((d) => d.deviceid === context.deviceid);
 
     if (!firsttime && (newlocation || newdevice)) {
-      const previewUrl = await startotp(existingUser, context);
+      let previewUrl;
+      try {
+        previewUrl = await startotp(existingUser, context);
+      } catch (mailError) {
+        console.error("OTP email failed:", mailError);
+        return res.status(503).json({
+          message: "We couldn't send your verification code right now. Please try again in a minute.",
+        });
+      }
       return res.status(200).json({
         otpRequired: true,
         userId: existingUser._id,
