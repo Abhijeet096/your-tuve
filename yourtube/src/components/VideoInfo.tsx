@@ -32,12 +32,17 @@ const VideoInfo = ({ video }: any) => {
   //   email: "john@example.com",
   //   image: "https://github.com/shadcn.png?height=32&width=32",
   // };
+  const [popped, setPopped] = useState({ like: 0, dislike: 0 });
   useEffect(() => {
     setlikes(video.Like || 0);
     setDislikes(video.Dislike || 0);
     setIsLiked(false);
     setIsDisliked(false);
-  }, [video]);
+    axiosInstance
+      .get(`/like/status/${video._id}`, { params: { userId: user?._id } })
+      .then((res) => applycounts(res.data))
+      .catch(() => {});
+  }, [video, user?._id]);
 
   useEffect(() => {
     const handleviews = async () => {
@@ -89,29 +94,48 @@ const VideoInfo = ({ video }: any) => {
       setDownloading(false);
     }
   };
-  const handleLike = async () => {
-    if (!user) return;
-    try {
-      const res = await axiosInstance.post(`/like/${video._id}`, {
-        userId: user?._id,
-      });
-      if (res.data.liked) {
-        if (isLiked) {
-          setlikes((prev: any) => prev - 1);
-          setIsLiked(false);
-        } else {
-          setlikes((prev: any) => prev + 1);
-          setIsLiked(true);
-          if (isDisliked) {
-            setDislikes((prev: any) => prev - 1);
-            setIsDisliked(false);
-          }
-        }
+  const applycounts = (data: any) => {
+    setlikes(data.likes);
+    setDislikes(data.dislikes);
+    setIsLiked(data.liked);
+    setIsDisliked(data.disliked);
+  };
+  const react = async (type: "like" | "dislike") => {
+    if (!user) {
+      toast.error(`Sign in to ${type} this video`);
+      return;
+    }
+    const before = { likes, dislikes, liked: isLiked, disliked: isDisliked };
+    const next = { ...before };
+    if (type === "like") {
+      next.liked = !before.liked;
+      next.likes += next.liked ? 1 : -1;
+      if (next.liked && before.disliked) {
+        next.disliked = false;
+        next.dislikes -= 1;
       }
+    } else {
+      next.disliked = !before.disliked;
+      next.dislikes += next.disliked ? 1 : -1;
+      if (next.disliked && before.liked) {
+        next.liked = false;
+        next.likes -= 1;
+      }
+    }
+    applycounts(next);
+    setPopped((p) => ({ ...p, [type]: p[type] + 1 }));
+    try {
+      const res = await axiosInstance.post(
+        type === "like" ? `/like/${video._id}` : `/like/dislike/${video._id}`,
+        { userId: user._id }
+      );
+      applycounts(res.data);
     } catch (error) {
-      console.log(error);
+      applycounts(before);
+      toast.error("Couldn't update, please try again");
     }
   };
+  const handleLike = () => react("like");
   const handleWatchLater = async () => {
     if (!user) {
       toast.error("Sign in to save videos for later");
@@ -130,29 +154,7 @@ const VideoInfo = ({ video }: any) => {
       console.log(error);
     }
   };
-  const handleDislike = async () => {
-    if (!user) return;
-    try {
-      const res = await axiosInstance.post(`/like/${video._id}`, {
-        userId: user?._id,
-      });
-      if (!res.data.liked) {
-        if (isDisliked) {
-          setDislikes((prev: any) => prev - 1);
-          setIsDisliked(false);
-        } else {
-          setDislikes((prev: any) => prev + 1);
-          setIsDisliked(true);
-          if (isLiked) {
-            setlikes((prev: any) => prev - 1);
-            setIsLiked(false);
-          }
-        }
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const handleDislike = () => react("dislike");
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{video.videotitle}</h1>
@@ -173,29 +175,37 @@ const VideoInfo = ({ video }: any) => {
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-l-full"
+              className={`rounded-l-full active:scale-95 transition-transform ${
+                isLiked ? "text-blue-600" : ""
+              }`}
               onClick={handleLike}
+              aria-pressed={isLiked}
+              title={isLiked ? "Unlike" : "I like this"}
             >
               <ThumbsUp
-                className={`w-5 h-5 mr-2 ${
-                  isLiked ? "fill-black text-black" : ""
-                }`}
+                key={`like-${popped.like}`}
+                className={`w-5 h-5 mr-2 ${popped.like ? "animate-pop" : ""}`}
+                fill={isLiked ? "currentColor" : "none"}
               />
-              {likes.toLocaleString()}
+              <span className="tabular-nums">{likes.toLocaleString()}</span>
             </Button>
             <div className="w-px h-6 bg-gray-300" />
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-r-full"
+              className={`rounded-r-full active:scale-95 transition-transform ${
+                isDisliked ? "text-blue-600" : ""
+              }`}
               onClick={handleDislike}
+              aria-pressed={isDisliked}
+              title={isDisliked ? "Remove dislike" : "I dislike this"}
             >
               <ThumbsDown
-                className={`w-5 h-5 mr-2 ${
-                  isDisliked ? "fill-black text-black" : ""
-                }`}
+                key={`dislike-${popped.dislike}`}
+                className={`w-5 h-5 mr-2 ${popped.dislike ? "animate-pop" : ""}`}
+                fill={isDisliked ? "currentColor" : "none"}
               />
-              {dislikes.toLocaleString()}
+              <span className="tabular-nums">{dislikes.toLocaleString()}</span>
             </Button>
           </div>
           <Button

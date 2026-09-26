@@ -9,6 +9,8 @@ const videochema = mongoose.Schema(
     filesize: { type: String, required: true },
     videochanel: { type: String, required: true },
     Like: { type: Number, default: 0 },
+    Dislike: { type: Number, default: 0 },
+    dislikers: [{ type: String }],
     views: { type: Number, default: 0 },
     uploader: { type: String },
   },

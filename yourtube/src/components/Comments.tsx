@@ -192,11 +192,32 @@ const Comments = ({ videoId }: any) => {
       toast("Sign in to react to comments");
       return;
     }
+    const before = comments.find((c) => c._id === id);
+    if (before) {
+      const next = { ...before };
+      if (type === "like") {
+        next.likedbyme = !before.likedbyme;
+        next.likecount += next.likedbyme ? 1 : -1;
+        if (next.likedbyme && before.dislikedbyme) {
+          next.dislikedbyme = false;
+          next.dislikecount -= 1;
+        }
+      } else {
+        next.dislikedbyme = !before.dislikedbyme;
+        next.dislikecount += next.dislikedbyme ? 1 : -1;
+        if (next.dislikedbyme && before.likedbyme) {
+          next.likedbyme = false;
+          next.likecount -= 1;
+        }
+      }
+      replaceComment(next);
+    }
     try {
       const res = await axiosInstance.post(`/comment/${type}/${id}`, { userId: user._id });
       replaceComment(res.data);
     } catch (error) {
-      console.log(error);
+      if (before) replaceComment(before);
+      toast.error("Couldn't update, please try again");
     }
   };
 
@@ -394,23 +415,31 @@ const Comments = ({ videoId }: any) => {
                       )}
                       <div className="flex items-center gap-1 mt-1 text-sm text-gray-600">
                         <button
-                          className={`flex items-center gap-1 px-2 py-1 rounded-full hover:bg-gray-100 ${
+                          className={`flex items-center gap-1 px-2 py-1 rounded-full hover:bg-gray-100 active:scale-90 transition-transform ${
                             comment.likedbyme ? "text-blue-600" : ""
                           }`}
                           onClick={() => handleReaction(comment._id, "like")}
                           aria-label="Like"
                         >
-                          <ThumbsUp className="w-4 h-4" fill={comment.likedbyme ? "currentColor" : "none"} />
+                          <ThumbsUp
+                            key={`l-${comment.likedbyme}`}
+                            className={`w-4 h-4 ${comment.likedbyme ? "animate-pop" : ""}`}
+                            fill={comment.likedbyme ? "currentColor" : "none"}
+                          />
                           {comment.likecount > 0 && <span className="text-xs">{comment.likecount}</span>}
                         </button>
                         <button
-                          className={`flex items-center gap-1 px-2 py-1 rounded-full hover:bg-gray-100 ${
+                          className={`flex items-center gap-1 px-2 py-1 rounded-full hover:bg-gray-100 active:scale-90 transition-transform ${
                             comment.dislikedbyme ? "text-blue-600" : ""
                           }`}
                           onClick={() => handleReaction(comment._id, "dislike")}
                           aria-label="Dislike"
                         >
-                          <ThumbsDown className="w-4 h-4" fill={comment.dislikedbyme ? "currentColor" : "none"} />
+                          <ThumbsDown
+                            key={`d-${comment.dislikedbyme}`}
+                            className={`w-4 h-4 ${comment.dislikedbyme ? "animate-pop" : ""}`}
+                            fill={comment.dislikedbyme ? "currentColor" : "none"}
+                          />
                           {comment.dislikecount > 0 && <span className="text-xs">{comment.dislikecount}</span>}
                         </button>
                         <button
