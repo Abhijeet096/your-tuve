@@ -78,21 +78,15 @@ export const verifyPayment = async (req, res) => {
       paymentId: razorpay_payment_id,
     });
 
-    let emailPreview = null;
-    try {
-      const mail = await sendInvoiceEmail({
-        to: viewer.email,
-        plan,
-        amount: plans[plan].price,
-        paymentId: razorpay_payment_id,
-        orderId: razorpay_order_id,
-      });
-      emailPreview = mail.previewUrl;
-    } catch (mailError) {
-      console.error("invoice email failed:", mailError);
-    }
+    sendInvoiceEmail({
+      to: viewer.email,
+      plan,
+      amount: plans[plan].price,
+      paymentId: razorpay_payment_id,
+      orderId: razorpay_order_id,
+    }).catch((mailError) => console.error("invoice email failed:", mailError));
 
-    return res.status(200).json({ user: viewer, emailPreview });
+    return res.status(200).json({ user: viewer });
   } catch (error) {
     console.error(" error:", error);
     return res.status(500).json({ message: "Something went wrong" });

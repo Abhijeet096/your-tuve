@@ -47,6 +47,7 @@ export default function SubscriptionPlans() {
         order_id: orderId,
         prefill: { name: user.name, email: user.email },
         handler: async (response: any) => {
+          const pending = toast.loading("Confirming your payment...");
           try {
             const verifyRes = await axiosInstance.post("/payment/verify", {
               razorpay_order_id: response.razorpay_order_id,
@@ -56,9 +57,11 @@ export default function SubscriptionPlans() {
               userId: user._id,
             });
             login(verifyRes.data.user);
-            toast.success(`You're now on the ${plans[plan].label} plan`);
+            toast.success(`You're now on the ${plans[plan].label} plan. Invoice sent to ${user.email}`, {
+              id: pending,
+            });
           } catch {
-            toast.error("Payment succeeded but activation failed. Contact support.");
+            toast.error("Payment succeeded but activation failed. Contact support.", { id: pending });
           }
         },
         modal: {
